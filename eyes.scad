@@ -27,7 +27,7 @@ module eyeAssembly(eyeDiam = 20) {
     frontCutOffPlane = 0.32;
     backCutOffPlane = 0.65;
 
-    jointPinDiam = 3 + 0.2;
+    jointPinDiam = 3;
     jointGap = 1;
     jointCenterDiam = eyeDiam / 5;
     jointCenterHeight = eyeDiam / 2;
@@ -38,10 +38,10 @@ module eyeAssembly(eyeDiam = 20) {
     supportPlatformLen = 30;
 
     translate([0, -depth, 0]) {
-        eyeBase(eyeDiam, frontCutOffPlane = frontCutOffPlane, backCutOffPlane = backCutOffPlane, jointPinDiam = jointPinDiam, jointCenterDiam=jointCenterDiam, jointCenterHeight=jointCenterHeight, cameraPreview=true, jointGap = jointGap);
+        //eyeBase(eyeDiam, frontCutOffPlane = frontCutOffPlane, backCutOffPlane = backCutOffPlane, jointPinDiam = jointPinDiam, jointCenterDiam=jointCenterDiam, jointCenterHeight=jointCenterHeight, cameraPreview=true, jointGap = jointGap);
         eyeJoint(jointPinDiam, jointCenterDiam, jointCenterHeight=jointCenterHeight);
-        eyeHolder(jointPinDiam, jointCenterDiam, jointGap, supportArmW, supportArmH, supportDistance, supportPlatformLen);
-        %eye(eyeDiam, cutOffPlane = frontCutOffPlane);
+        //eyeHolder(jointPinDiam, jointCenterDiam, jointGap, supportArmW, supportArmH, supportDistance, supportPlatformLen);
+        //%eye(eyeDiam, cutOffPlane = frontCutOffPlane);
     }
 
 }
@@ -160,7 +160,7 @@ module eyeBase(eyeDiam=20, thickness = 4, frontCutOffPlane = 0.35, backCutOffPla
 }
 
 
-module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6) {
+module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6, nutHoleWidth=5.3, nutHoleHeight=4.3) {
 
     difference() {
         // Central body
@@ -178,6 +178,13 @@ module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6) {
         for (a = [0, 90]) 
             rotate([0, a, 0])
                 cylinder(r= jointPinDiam/2, h = max(jointCenterHeight,jointDiam)+2, center=true, $fn=40);
+                
+        // Cut holes for nuts
+        for (a = [0, 180]) 
+            rotate([0, a, 0])
+                translate([-nutHoleWidth/2, -jointDiam + nutHoleWidth*0.8, jointPinDiam * 1.5])
+                    cube([nutHoleWidth, jointDiam, nutHoleHeight]);
+                
     }   
 }
 
