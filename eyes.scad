@@ -4,8 +4,10 @@ use <utils.scad>
 // Animatronic eye-pair assembly
 
 // Example:
-eyesAssembly();
+//eyesAssembly();
 
+rotate([-90, 0, 0])
+    eyeAssembly(60);
 
 module eyesAssembly(eyeDiam = 60, eyeDistance = 80) {
 
@@ -22,12 +24,12 @@ module eyesAssembly(eyeDiam = 60, eyeDistance = 80) {
 
 module eyeAssembly(eyeDiam = 20) {
 
-    depth = 20;
+    depth = 0;
 
     frontCutOffPlane = 0.32;
     backCutOffPlane = 0.65;
 
-    jointPinDiam = 3;
+    jointPinDiam = 3.1;
     jointGap = 1;
     jointCenterDiam = eyeDiam / 5;
     jointCenterHeight = eyeDiam / 2;
@@ -160,7 +162,7 @@ module eyeBase(eyeDiam=20, thickness = 4, frontCutOffPlane = 0.35, backCutOffPla
 }
 
 
-module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6, nutHoleWidth=5.3, nutHoleHeight=4.3) {
+module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6, nutHoleWidth=6, nutHoleHeight=4.5) {
 
     difference() {
         // Central body
@@ -182,7 +184,7 @@ module eyeJoint(jointPinDiam = 3, jointDiam = 6, jointCenterHeight=6, nutHoleWid
         // Cut holes for nuts
         for (a = [0, 180]) 
             rotate([0, a, 0])
-                translate([-nutHoleWidth/2, -jointDiam + nutHoleWidth*0.8, jointPinDiam * 1.5])
+                translate([-nutHoleWidth/2, -jointDiam + nutHoleWidth*0.9, jointPinDiam * 1.5])
                     cube([nutHoleWidth, jointDiam, nutHoleHeight]);
                 
     }   
