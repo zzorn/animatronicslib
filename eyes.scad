@@ -4,10 +4,10 @@ use <utils.scad>
 // Animatronic eye-pair assembly
 
 // Example:
-//eyesAssembly();
+eyesAssembly();
 
-rotate([-90, 0, 0])
-    eyeAssembly(60);
+//rotate([-90, 0, 0])
+//    eyeAssembly(60);
 
 module eyesAssembly(eyeDiam = 60, eyeDistance = 80) {
 
@@ -40,10 +40,10 @@ module eyeAssembly(eyeDiam = 20) {
     supportPlatformLen = 30;
 
     translate([0, -depth, 0]) {
-        //eyeBase(eyeDiam, frontCutOffPlane = frontCutOffPlane, backCutOffPlane = backCutOffPlane, jointPinDiam = jointPinDiam, jointCenterDiam=jointCenterDiam, jointCenterHeight=jointCenterHeight, cameraPreview=true, jointGap = jointGap);
+        eyeBase(eyeDiam, frontCutOffPlane = frontCutOffPlane, backCutOffPlane = backCutOffPlane, jointPinDiam = jointPinDiam, jointCenterDiam=jointCenterDiam, jointCenterHeight=jointCenterHeight, cameraPreview=true, jointGap = jointGap);
         eyeJoint(jointPinDiam, jointCenterDiam, jointCenterHeight=jointCenterHeight);
-        //eyeHolder(jointPinDiam, jointCenterDiam, jointGap, supportArmW, supportArmH, supportDistance, supportPlatformLen);
-        //%eye(eyeDiam, cutOffPlane = frontCutOffPlane);
+        eyeHolder(jointPinDiam, jointCenterDiam, jointGap, supportArmW, supportArmH, supportDistance, supportPlatformLen);
+        %eye(eyeDiam, cutOffPlane = frontCutOffPlane);
     }
 
 }
@@ -51,14 +51,22 @@ module eyeAssembly(eyeDiam = 20) {
 
 
 module eyeBase(eyeDiam=20, thickness = 4, frontCutOffPlane = 0.35, backCutOffPlane = 0.65, jointPinDiam = 3, jointCenterDiam = 6, jointCenterHeight=6, spherical = true, cameraMountingHoleDist = 30, cameraMountingHoleDiam = 3, cameraPreview=false, jointGap = 0.5) {
-       
+
+    screwHeadDiam = jointPinDiam * 2.5;
+    screwHeadHeight = jointPinDiam * 1;
+    magnetHeight = 3;
+    magnetEncoderW = 4.1 + 0.2;
+    magnetEncoderH = 3.1 + 0.1;
+    magnetEncoderT = 1.5 + 0.2;
+    magnetEncoderSpacing = 1.5;
+    magnetEncoderAngle = 0;
+    
+
     smoothness = 60;
 
     epsilon = 0.01;
     r = eyeDiam / 2;
     
-    tabHoleDiam = 3;
-
     jointConnectorDiam = jointPinDiam*3;
     jointConnectorH = eyeDiam/2 - jointCenterHeight/2 - jointGap - thickness/2;
     
@@ -67,77 +75,105 @@ module eyeBase(eyeDiam=20, thickness = 4, frontCutOffPlane = 0.35, backCutOffPla
     backCutoffY = r*2*backCutOffPlane - r;
     h =  backCutoffY - frontCutoffY;
 
-    // Ring
-    jointConnectorAngles = [0, 180];
-    difference() {
-        // Ring
-        if (spherical) 
-            sphere(r=r, $fn=smoothness);   
-        else
-            translate([0, frontCutoffY+h, 0])
-                rotate([90, 0, 0])
-                    cylinder(r=r, h=h, $fn=smoothness);
+    jointConnectorAngles = [0, 180];    
 
-        // Cutout hole in ring                    
+    tiltActuatorAngles = [180, 90, -90];
+    tiltActuatorHoleW = 3;
+    tiltActuatorHoleLen = 1.5;
+    tiltActuatorAxisDiam = 3;
+
+
+    module internalSpace() {
         translate([0, frontCutoffY+h+1, 0])
-            rotate([90, 0, 0])
-                cylinder(r=r- thickness, h=h+2,$fn=smoothness/2);
-        translate([-r-epsilon, backCutoffY, -r-epsilon])
-            cube([eyeDiam+epsilon*2, eyeDiam, eyeDiam+epsilon*2]);
-        translate([-r-epsilon, frontCutoffY-eyeDiam, -r-epsilon])
-            cube([eyeDiam+epsilon*2, eyeDiam, eyeDiam+epsilon*2]);
+        rotate([90, 0, 0])
+            cylinder(r = r - thickness, h=h+2,$fn=smoothness/2);
 
-        // Cut holes for universal coint axis    
-        for (a=jointConnectorAngles) {
-            rotate([0, a, 0])
-                translate([0, 0, -eyeDiam/2 + thickness/2])
-                    translate([0,0,-thickness/2-1])
-                        cylinder(r=jointPinDiam/2, h = jointConnectorH+thickness+2, $fn=60);
-        }
     }
+    
+    difference() {
+        // Body
+        union() {
+            difference() {
+                union() {
+                    // Ring
+                    if (spherical) 
+                        sphere(r=r, $fn=smoothness);   
+                    else
+                        translate([0, frontCutoffY+h, 0])
+                            rotate([90, 0, 0])
+                                cylinder(r=r, h=h, $fn=smoothness);
+                }
 
-    // Joint connector
-    for (a=jointConnectorAngles) {
-        rotate([0, a, 0])
-            translate([0, 0, -eyeDiam/2 + thickness/2])
-                difference() {
-                    union() {
+                // Cutout hole in ring                    
+                internalSpace();
+                
+                // Cut ring front and back (if it's spherical)
+                translate([-r-epsilon, backCutoffY, -r-epsilon])
+                    cube([eyeDiam+epsilon*2, eyeDiam, eyeDiam+epsilon*2]);
+                translate([-r-epsilon, frontCutoffY-eyeDiam, -r-epsilon])
+                    cube([eyeDiam+epsilon*2, eyeDiam, eyeDiam+epsilon*2]);
+                    
+                // Cut out space for tilt actuator connectors    
+                for (a = tiltActuatorAngles) {
+                    rotate([0, a, 0])
+                        translate([0, backCutoffY - (tiltActuatorHoleLen + tiltActuatorAxisDiam)/2 + 0.01, r-thickness/2])    
+                            cube([tiltActuatorHoleW, tiltActuatorHoleLen+tiltActuatorAxisDiam, thickness*2], center=true);
+                }
+            }
+
+            // Joint connectors
+            for (a=jointConnectorAngles) {
+                rotate([0, a, 0])
+                    translate([0, 0, -eyeDiam/2 + thickness/2]) {
                         // Connector body
                         cylinder(r=jointConnectorDiam/2, h = jointConnectorH, $fn=30);
                         
                         // Add cube towards front, to make it easier to print
                         translate([0, frontCutoffY/2, jointConnectorH/2+thickness/4])
                             cube([jointConnectorDiam, -frontCutoffY, jointConnectorH-thickness/2], center=true);
-                    }                        
-                    
-                    // Drill axis hole
-                    translate([0,0,-thickness/2-1])
-                        cylinder(r=jointPinDiam/2, h = jointConnectorH+thickness+2, $fn=60);
-                }
-    }
+                    }  
+            }
 
-    // Tilt actuator tabs
-    tiltTabW = tabHoleDiam*2+1;
-    tiltTabLen = tiltTabW*1;
-    intersection() {    
-        for (a = [0, 90, 180, 270]) {
-            difference() {
-                // Add tilted tab, so that it's easier to print
+            // Create tilt actuator connector axles    
+            for (a = tiltActuatorAngles) {
                 rotate([0, a, 0])
-                    translate([r-thickness/2-tabHoleDiam*2, backCutoffY-tiltTabW/2, 0])    
-                        tabWithHole(tiltTabW, tabHoleDiam, tiltTabLen, thickness, rotateX=0, rotateZ=140, centerX=true, centerZ = true);
-
-                // Cut off anything overlapping the central axis hole
-                cylinder(r = jointPinDiam/2 + 1, h=eyeDiam, center=true, $fn=10);    
-            }        
+                    translate([0, backCutoffY - tiltActuatorAxisDiam / 2, r - thickness + tiltActuatorAxisDiam/2])    
+                        rotate([0, 90, 0])
+                            cylinder(r =  tiltActuatorAxisDiam/2, h = tiltActuatorHoleW + 0.01, center=true, $fn=30); 
+            }
+       }
+ 
+        // Cut holes for joint axis    
+        for (a=jointConnectorAngles) {
+            rotate([0, a, 0]) {
+                translate([0, 0, -eyeDiam/2 + thickness/2]) {
+                    translate([0,0,-thickness/2-1]) {
+                        cylinder(r=jointPinDiam/2, h = jointConnectorH+thickness+2, $fn=60);
+                    }    
+                }    
+                
+                // Sink screw heads
+                translate([0,0,-eyeDiam/2 - epsilon])
+                    cylinder(r=screwHeadDiam/2, h = screwHeadHeight+epsilon, $fn=60);
+            }    
         }
-        
-        // Cut off excess tab length by intersecting with eyeball
-        sphere(r=r, $fn=smoothness);        
+
+        // Cut space for magnet and magnetic encoder
+        rotate([0, magnetEncoder, 0])
+            translate([0,0,eyeDiam/2 + epsilon*2]) {
+                // Create space for magnet
+                rotate([0, 180, 0])    
+                    cylinder(r=screwHeadDiam/2, h = screwHeadHeight + magnetHeight + 2*magnetEncoderSpacing + magnetEncoderT + epsilon*2, $fn=60);
+                    
+                // Create space for magnetic encoder
+                translate([0,backCutoffY/2,-magnetEncoderT / 2 - magnetEncoderSpacing])
+                    #cube([magnetEncoderW, magnetEncoderH + backCutoffY, magnetEncoderT],  center=true);
+            } 
+
     }
-    
-    
-    
+
+
+           
     // Camera mount tabs
     mountingTabDiam = cameraMountingHoleDiam*2+1;
     cameraHoleDist = sqrt(2) * cameraMountingHoleDist/2;
@@ -149,7 +185,9 @@ module eyeBase(eyeDiam=20, thickness = 4, frontCutOffPlane = 0.35, backCutOffPla
                 tabWithHole(mountingTabDiam, cameraMountingHoleDiam, cameraMountTabLen, thickness, rotateX=90, rotateY=180, centerX = true, centerZ = false);
 
         // Cut off excess tab length by intersecting with eyeball
-        sphere(r=r, $fn=smoothness);
+        translate([0, frontCutoffY+h+1, 0])
+            rotate([90, 0, 0])
+                cylinder(r=r- thickness, h=h+2,$fn=smoothness/2);
     }
 
     // Camera preview
